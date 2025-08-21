@@ -3,6 +3,7 @@ from starlette.background import BackgroundTasks
 from pydantic import EmailStr
 from typing import List
 
+base_url = "https://fastfood-taupe.vercel.app"
 
 conf = ConnectionConfig(
     MAIL_USERNAME = "aminkhaled004@gmail.com",
@@ -22,7 +23,7 @@ async def send_verification_email(email_to: EmailStr, token: str):
     Sends an email with a verification link.
     This function will be run as a background task.
     """
-    verification_link = f"http://localhost:8000/auth/verify-email?token={token}"
+    verification_link = f"{base_url}/auth/verify-email?token={token}"
     
     html_content = f"""
     <html>
