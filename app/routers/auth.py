@@ -229,3 +229,12 @@ def refresh_token(
         refresh_token_expires_in_seconds=remaining_seconds
     )
 
+@router.delete("/delete-user//{id}")
+async def delete_user(id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    user_query = db.query(models.User).filter(models.user.id == id)
+    user = user_query.first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= f"User with id {id} was not found")
+    user.delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
