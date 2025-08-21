@@ -229,7 +229,7 @@ def refresh_token(
         refresh_token_expires_in_seconds=remaining_seconds
     )
 
-@router.delete("/delete-user//{id}")
+@router.delete("/delete-user/{id}")
 async def delete_user(id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     user_query = db.query(models.User).filter(models.user.id == id)
     user = user_query.first()
