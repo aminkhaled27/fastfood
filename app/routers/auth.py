@@ -9,6 +9,14 @@ from .. import database
 from .. import email_utils
 from ..database import get_db
 from ..oauth2 import bearer_scheme
+from ..response_utils import (
+    success_response, 
+    error_response, 
+    not_found_response, 
+    unauthorized_response, 
+    forbidden_response, 
+    conflict_response
+)
 
 router=(APIRouter(
     prefix="/auth",
@@ -27,7 +35,9 @@ async def register_user(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail=conflict_response(
+                msg="Email already registered"
+            )
         )
     hashed_password = utils.hash_password(user.password)
     new_user = models.User(
@@ -38,40 +48,65 @@ async def register_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
+    
     verification_token = oauth2.create_email_verification_token(new_user.email)
     background_tasks.add_task(
         email_utils.send_verification_email, 
         email_to=new_user.email, 
         token=verification_token
     )
-    return {"Message": "Your registration was successful! Please check your email to verify your account and complete the process."}
+    return success_response(
+        data={"email": new_user.email},
+        msg="Your registration was successful! Please check your email to verify your account and complete the process.",
+        status_code=201
+    )
 
 @router.get("/verify-email", status_code=status.HTTP_200_OK)
 def verify_email(token: str, db: Session = Depends(database.get_db)):
     try:
         token_data = oauth2.verify_email_verification_token(token)
         email = token_data.email
-    except HTTPException :
+        print(f"Email from token: {email}")
+    except HTTPException as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired email verification token"
+            detail=error_response(
+                ret=400,
+                msg="Invalid or expired email verification token"
+            )
         )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(
+                ret=400,
+                msg="Token verification error"
+            )
+        )
+    
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
+        
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail=not_found_response("User not found")
         )
+    
     if user.is_validated:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already verified"
+            detail=error_response(
+                ret=400,
+                msg="Email already verified"
+            )
         )
+    
     user.is_validated = True
     db.commit()
-    return {"Message": "Email verified successfully"}
-
+    return success_response(
+        data={"email": user.email},
+        msg="Email verified successfully"
+    )
 
 @router.post("/login")
 def login(user_cerdentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
@@ -79,30 +114,30 @@ def login(user_cerdentials: OAuth2PasswordRequestForm = Depends(), db: Session =
     if not user or not utils.verify_password(user_cerdentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"}
+            detail=unauthorized_response("Invalid credentials")
         )
     if not utils.verify_password(user_cerdentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect password",
-            headers={"WWW-Authenticate": "Bearer"}
+            detail=unauthorized_response("Incorrect password")
         )
     if not user.is_validated:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email not verified. Please check your email for verification link."
+            detail=forbidden_response("Email not verified. Please check your email for verification link.")
         )
     access_token = oauth2.create_access_token(data={"user_id": user.id})
     refresh_token = oauth2.create_refresh_token(data={"user_id": user.id})
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user_id": user.id,
-        "email": user.email
-    }
-
+    return success_response(
+        data={
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user_id": user.id,
+            "email": user.email
+        },
+        msg="Login successful"
+    )
 
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(request: schemas.PasswordResetRequest, db: Session = Depends(get_db)):
@@ -110,7 +145,7 @@ async def forgot_password(request: schemas.PasswordResetRequest, db: Session = D
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User with this email not found"
+            detail=not_found_response("User with this email not found")
         )
     
     otp = secrets.randbelow(900000) + 100000
@@ -124,8 +159,10 @@ async def forgot_password(request: schemas.PasswordResetRequest, db: Session = D
     # You would use a background task here for the actual email sending in a production environment
     await email_utils.send_otp_email(user.email, otp_str)
     
-    return {"message": "An OTP has been sent to your email to reset your password."}
-
+    return success_response(
+        data={"email": user.email},
+        msg="An OTP has been sent to your email to reset your password."
+    )
 
 @router.post("/verify-otp", status_code=status.HTTP_200_OK)
 def verify_otp(request: schemas.VerifyOtp, db: Session = Depends(get_db)):
@@ -133,26 +170,34 @@ def verify_otp(request: schemas.VerifyOtp, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail=not_found_response("User not found")
         )
     
     if not user.otp or not utils.verify_password(request.otp, user.otp):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid OTP"
+            detail=error_response(
+                ret=400,
+                msg="Invalid OTP"
+            )
         )
     
     if user.otp_expiration and datetime.datetime.now(datetime.timezone.utc) > user.otp_expiration:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OTP has expired. Please request a new one."
+            detail=error_response(
+                ret=400,
+                msg="OTP has expired. Please request a new one."
+            )
         )
 
     # If valid, generate a short-lived password reset token
     reset_token = oauth2.create_password_reset_access_token(email=user.email)
     
-    return {"message": "OTP is valid.", "reset_token": reset_token}
-
+    return success_response(
+        data={"reset_token": reset_token},
+        msg="OTP is valid."
+    )
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 def reset_password(
@@ -165,14 +210,17 @@ def reset_password(
     except HTTPException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
+            detail=error_response(
+                ret=400,
+                msg="Invalid or expired reset token"
+            )
         )
     
     user = db.query(models.User).filter(models.User.email == token_data.email).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail=not_found_response("User not found")
         )
 
     # Hash the new password and update it
@@ -184,8 +232,10 @@ def reset_password(
     user.otp_expiration = None
     db.commit()
     
-    return {"message": "Password has been successfully reset."}
-
+    return success_response(
+        data={"email": user.email},
+        msg="Password has been successfully reset."
+    )
 
 # Refresh endpoint using Bearer refresh token
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -198,8 +248,7 @@ def refresh_token(
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"}
+        detail=unauthorized_response("Could not validate credentials")
     )
     # Prefer token from body if provided
     token_value = None
@@ -222,19 +271,29 @@ def refresh_token(
     now = datetime.now(_tz.utc)
     remaining_seconds = max(0, int((expires_at - now).total_seconds()))
 
-    return schemas.RefreshAccessTokenResponse(
-        id=user.id,
-        access_token=new_access_token,
-        token_type="bearer",
-        refresh_token_expires_in_seconds=remaining_seconds
+    return success_response(
+        data=schemas.RefreshAccessTokenResponse(
+            id=user.id,
+            access_token=new_access_token,
+            token_type="bearer",
+            refresh_token_expires_in_seconds=remaining_seconds
+        ),
+        msg="Token refreshed successfully"
     )
 
 @router.delete("/delete-user/{id}")
 async def delete_user(id: int, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    user_query = db.query(models.User).filter(models.User.id == id)
-    user = user_query.first()
+    user = db.query(models.User).filter(models.User.id == id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} was not found")
-    user_query.delete(synchronize_session=False)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=not_found_response("User not found")
+        )
+    
+    db.delete(user)
     db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    
+    return success_response(
+        data={"deleted_user_id": id},
+        msg="User deleted successfully"
+    )

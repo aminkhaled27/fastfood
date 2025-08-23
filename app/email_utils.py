@@ -4,6 +4,7 @@ from pydantic import EmailStr
 from typing import List
 
 base_url = "https://fastfood-taupe.vercel.app"
+localurl = "http://127.0.0.1:8000"
 
 conf = ConnectionConfig(
     MAIL_USERNAME = "aminkhaled004@gmail.com",

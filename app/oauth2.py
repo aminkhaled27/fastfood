@@ -100,7 +100,7 @@ def verify_refresh_token(token: str, credentials_exception):
     
 
 def create_email_verification_token(email: str):
-    to_encode = schemas.EmailverificationTokenData(email=email).model_dump()
+    to_encode = {"email": email, "token_type": "email_verification"}
     expire = datetime.now(timezone.utc) + timedelta(minutes=EMAIL_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -126,7 +126,7 @@ def verify_email_verification_token(token: str):
 
 def create_password_reset_access_token(email: str):
     to_encode = {"email": email, "token_type": "password_reset"}
-    expire = datetime.now(timezone.utc) + timedelta(minutes=10) 
+    expire = datetime.now(timezone.utc) + timedelta(minutes=10) # Short expiration for security
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

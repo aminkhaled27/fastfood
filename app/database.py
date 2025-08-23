@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 SQLALCHEMY_DATABASE_URL = "postgresql://neondb_owner:npg_7kFQ8VyTgmPh@ep-aged-snow-adjjrhe6-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
+
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 Sessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
