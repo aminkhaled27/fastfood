@@ -307,7 +307,4 @@ async def get_all_users(db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=not_found_response("User not found")
         )
-    return success_response(
-        data=all_users,
-        message="",
-    )
+    return all_users
