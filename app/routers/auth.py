@@ -297,3 +297,17 @@ async def delete_user(id: int, db: Session = Depends(get_db), current_user: mode
         data={"deleted_user_id": id},
         msg="User deleted successfully"
     )
+
+
+@router.get("/get-all-users")
+async def get_all_users(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+    all_users = db.query(models.User).all()
+    if not all_users:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=not_found_response("User not found")
+        )
+    return success_response(
+        data=all_users,
+        message="",
+    )
