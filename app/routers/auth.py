@@ -300,7 +300,7 @@ async def delete_user(id: int, db: Session = Depends(get_db), current_user: mode
 
 
 @router.get("/get-all-users")
-async def get_all_users(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+async def get_all_users(db: Session = Depends(get_db)):
     all_users = db.query(models.User).all()
     if not all_users:
         raise HTTPException(
