@@ -19,7 +19,7 @@ class UserRegister(BaseModel):
             raise ValueError('Password must contain at least one symbol (!@#$%^&*(),.?":{}|<>)')
         
         if len(v) < 8:
-            raise ValueError('Password must be at least 6 characters long')
+            raise ValueError('Password must be at least 8 characters long')
         
         return v
 
@@ -68,7 +68,7 @@ class ResetPassword(BaseModel):
             raise ValueError('Password must contain at least one symbol (!@#$%^&*(),.?":{}|<>)')
         
         if len(v) < 8:
-            raise ValueError('Password must be at least 6 characters long')
+            raise ValueError('Password must be at least 8 characters long')
         
         return v
 
