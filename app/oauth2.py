@@ -10,8 +10,8 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 SECRET_KEY = "version0.1ofpostsapplicationthisisthesecretkey0.1anditshouldnotbeexposedthanks0123456789"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
+REFRESH_TOKEN_EXPIRE_DAYS = 2
 EMAIL_TOKEN_EXPIRE_MINUTES = 60
 PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = 10
 
@@ -126,7 +126,7 @@ def verify_email_verification_token(token: str):
 
 def create_password_reset_access_token(email: str):
     to_encode = {"email": email, "token_type": "password_reset"}
-    expire = datetime.now(timezone.utc) + timedelta(minutes=10) # Short expiration for security
+    expire = datetime.now(timezone.utc) + timedelta(minutes=PASSWORD_RESET_TOKEN_EXPIRE_MINUTES) 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

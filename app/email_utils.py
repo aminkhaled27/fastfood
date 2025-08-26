@@ -70,7 +70,7 @@ async def send_otp_email(email_to: EmailStr, otp: str):
         <div style="margin: 25px 0;">
           <h2 style="font-size: 36px; color: #ff9900; letter-spacing: 5px;">{otp}</h2>
         </div>
-        <p style="font-size: 14px; color: #888888;">This OTP is valid for 5 minutes.</p>
+        <p style="font-size: 14px; color: #888888;">This OTP is valid for 10 minutes.</p>
       </div>
     </body>
     </html>
