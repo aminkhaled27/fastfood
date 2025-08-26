@@ -42,6 +42,8 @@ class RefreshAccessTokenResponse(BaseModel):
     token_type: str
     refresh_token_expires_in_seconds: int
 
+    
+
 class EmailverificationTokenData(BaseModel):
     email: EmailStr
     token_type: str = "email_verification"

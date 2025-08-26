@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 from fastapi.responses import JSONResponse
 from fastapi import status
 
@@ -72,10 +72,14 @@ def error_response(
         msg=msg
     )
 
-def not_found_response(msg: str = "Resource not found") -> dict:
+def not_found_response(
+        msg: str = "Resource not found",
+        data: Any = None
+        ) -> dict:
     """Create a 404 not found response"""
     return error_response(
         ret=404,
+        data=data,
         msg=msg,
         status_code=404
     )
@@ -89,26 +93,29 @@ def validation_error_response(msg: str = "Validation error", data: Any = None) -
         status_code=422
     )
 
-def unauthorized_response(msg: str = "Unauthorized") -> dict:
+def unauthorized_response(msg: str = "Unauthorized", data: Any = None) -> dict:
     """Create an unauthorized response"""
     return error_response(
         ret=401,
+        data=data,
         msg=msg,
         status_code=401
     )
 
-def forbidden_response(msg: str = "Forbidden") -> dict:
+def forbidden_response(msg: str = "Forbidden" , data: Any = None) -> dict:
     """Create a forbidden response"""
     return error_response(
         ret=403,
+        data = data,
         msg=msg,
         status_code=403
     )
 
-def conflict_response(msg: str = "Conflict occurred") -> dict:
+def conflict_response(msg: str = "Conflict occurred", data:Any= None ) -> dict:
     """Create a conflict response"""
     return error_response(
         ret=409,
+        data=data,
         msg=msg,
         status_code=409
     )
