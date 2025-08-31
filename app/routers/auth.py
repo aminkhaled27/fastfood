@@ -146,6 +146,17 @@ def login(user_cerdentials: OAuth2PasswordRequestForm = Depends(), db: Session =
         }],
     )
 
+@router.get("/validate-token")
+def validate_token(current_user: models.User = Depends(oauth2.get_current_user)):
+    return success_response(
+        data=[{
+            "id":current_user.id,
+            "name":current_user.name,
+            "email":current_user.email
+        }]
+    )
+
+
 @router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(request: schemas.PasswordResetRequest, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == request.email).first()

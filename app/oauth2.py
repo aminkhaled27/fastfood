@@ -1,6 +1,8 @@
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 from datetime import datetime, timedelta, timezone
+
+from app.response_utils import unauthorized_response
 from . import schemas, models, database
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends, HTTPException, status
@@ -10,8 +12,8 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 SECRET_KEY = "version0.1ofpostsapplicationthisisthesecretkey0.1anditshouldnotbeexposedthanks0123456789"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
-REFRESH_TOKEN_EXPIRE_DAYS = 2
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = 7
 EMAIL_TOKEN_EXPIRE_MINUTES = 60
 PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = 10
 
@@ -57,7 +59,10 @@ def get_current_user(
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail=unauthorized_response(
+                data=[{"message":"Could not validate credentials"}],
+                msg= "Expierd Token"
+            ),
         headers={"WWW-Authenticate": "Bearer"}
     )
     if credentials is None or credentials.scheme.lower() != "bearer":
