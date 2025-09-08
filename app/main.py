@@ -1,10 +1,15 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
 from . import models
 from .database import engine
-from .routers import auth
+from .routers import auth, social_auth
 from .response_utils import error_response, validation_error_response
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -42,3 +47,4 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 app.include_router(auth.router)
+app.include_router(social_auth.router)
