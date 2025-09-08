@@ -1,11 +1,8 @@
 import os
+from fastapi import Request
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from starlette.background import BackgroundTasks
 from pydantic import EmailStr
-from typing import List
 
-base_url = "https://fastfood-taupe.vercel.app"
-localurl = "http://127.0.0.1:8000"
 
 conf = ConnectionConfig(
     MAIL_USERNAME = os.getenv("MAIL_USERNAME"),
@@ -20,13 +17,13 @@ conf = ConnectionConfig(
 )
 
 
-async def send_verification_email(email_to: EmailStr, token: str):
+async def send_verification_email(email_to: EmailStr, token: str, request: Request):
     """
     Sends an email with a verification link.
     This function will be run as a background task.
     """
-    verification_link = f"{localurl}/auth/verify-email?token={token}"
-    
+    base_url = request.base_url
+    verification_link = f"{base_url}auth/verify-email?token={token}"    
     html_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
