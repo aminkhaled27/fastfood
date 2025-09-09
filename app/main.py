@@ -5,13 +5,19 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import models
-from .database import engine
-from .routers import auth, social_auth
-from .response_utils import error_response, validation_error_response
+from app import models
+from app.database import engine
+from app.routers import auth, social_auth
+from app.response_utils import error_response, validation_error_response
 
 
-models.Base.metadata.create_all(bind=engine)
+# Avoid running DDL on every import in serverless environments
+# You should run migrations separately instead.
+try:
+    models.Base.metadata.create_all(bind=engine)
+except Exception:
+    # Swallow to prevent cold-start crash; actual DB ops will surface errors
+    pass
 
 app = FastAPI()
 

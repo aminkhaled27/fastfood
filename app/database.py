@@ -1,11 +1,21 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.pool import NullPool
+import os
 
-SQLALCHEMY_DATABASE_URL = "postgresql://neondb_owner:npg_7kFQ8VyTgmPh@ep-calm-sunset-adkilvcl-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Use DATABASE_URL from environment; ensure SSL is required in production
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "")
+if not SQLALCHEMY_DATABASE_URL:
+    # Fallback for local development; consider moving to .env
+    SQLALCHEMY_DATABASE_URL = "postgresql://neondb_owner:npg_7kFQ8VyTgmPh@ep-calm-sunset-adkilvcl-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Serverless-friendly: avoid persistent connection pooling
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    poolclass=NullPool,
+    pool_pre_ping=True,
+)
 
 Sessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
