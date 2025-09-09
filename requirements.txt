@@ -8,3 +8,4 @@ python-multipart
 pydantic[email]
 fastapi-mail
 python-dotenv
+fastapi-sso==0.18.0
