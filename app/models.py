@@ -11,7 +11,6 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
     is_validated = Column(Boolean, default=False, nullable=False)
     otp = Column(String, nullable=True)
