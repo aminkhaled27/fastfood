@@ -27,7 +27,9 @@ router=(APIRouter(
 async def register_user(
     user: schemas.UserRegister, 
     background_tasks: BackgroundTasks,
-    db: Session = Depends(database.get_db)):
+    db: Session = Depends(database.get_db),
+    request: Request = None
+    ):
     email_lower = user.email.lower()
     user.email = email_lower
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -52,7 +54,8 @@ async def register_user(
     background_tasks.add_task(
         email_utils.send_verification_email, 
         email_to=new_user.email, 
-        token=verification_token
+        token=verification_token,
+        request=request
     )
     return success_response(
         data=[{"email": new_user.email,"message":"Your registration was successful! Please check your email to verify your account and complete the process."}],
