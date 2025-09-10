@@ -1,3 +1,4 @@
+import os
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 from datetime import datetime, timedelta, timezone
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-SECRET_KEY = "version0.1ofpostsapplicationthisisthesecretkey0.1anditshouldnotbeexposedthanks0123456789"
+SECRET_KEY = os.getenv("OAUTH2_SECERT_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1
 REFRESH_TOKEN_EXPIRE_DAYS = 3
