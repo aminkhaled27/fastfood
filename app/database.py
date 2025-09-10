@@ -6,9 +6,6 @@ import os
 
 # Use DATABASE_URL from environment; ensure SSL is required in production
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "")
-if not SQLALCHEMY_DATABASE_URL:
-    # Fallback for local development; consider moving to .env
-    SQLALCHEMY_DATABASE_URL = "postgresql://neondb_owner:npg_7kFQ8VyTgmPh@ep-calm-sunset-adkilvcl-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 # Serverless-friendly: avoid persistent connection pooling
 engine = create_engine(
